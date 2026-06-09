@@ -1,3 +1,61 @@
+# Celeb Map (개발 중)
+
+간단한 모바일 레이아웃의 Next.js 앱입니다. 셀럽(그룹) 기반으로 추천 맛집을 보여주는 UI 데모입니다.
+
+## 주요 기능
+- 홈: 셀럽 카드 선택 → 해당 그룹 추천 맛집 목록 → 상세 보기
+- 검색/코스/지도 탭(더미 UI)
+- 하단 네비게이션 바
+
+## 프로젝트 구조 (중요 파일)
+- `app/page.tsx` — 메인 페이지(상태 보유, 탭 관리)
+- `app/layout.tsx` — 공통 레이아웃
+- `app/components/Navbar.tsx` — 하단 네비게이션
+- `app/components/HomeView.tsx` — 홈 / 리스트 / 상세 뷰
+- `app/components/SearchView.tsx` — 검색 뷰
+- `app/components/CourseView.tsx` — 코스 뷰
+- `app/components/MapView.tsx` — 지도 뷰
+- `app/components/Icons.tsx` — (로컬 아이콘 모음, 필요시 lucide로 교체 가능)
+
+## 개발 환경 및 실행
+Node.js와 npm이 설치되어 있어야 합니다.
+
+설치:
+```bash
+npm install
+```
+
+만약 일부 아이콘 패키지(lucide-react 등)에서 peer dependency 충돌로 설치 실패할 경우, 아래 옵션으로 재시도하세요:
+```bash
+npm install --legacy-peer-deps
+```
+
+개발 서버 실행:
+```bash
+npm run dev
+```
+
+빌드/배포:
+```bash
+npm run build
+npm start
+```
+
+## 스타일/아이콘
+- Tailwind CSS를 사용합니다. (`globals.css`에 설정)
+- 초기 구현에서는 로컬 SVG 아이콘과 `lucide-react` 중 선택하여 사용했습니다. 문제가 발생하면 `app/components/Icons.tsx`를 편집해 대체 가능합니다.
+
+## 변경사항 요약
+- 페이지 및 뷰들을 컴포넌트로 분리했습니다.
+- 하단 네비게이션과 홈 스택 네비게이션(간단한 push/pop) 구현했습니다.
+- 클릭 가능한 요소에 `cursor-pointer`를 적용했습니다.
+
+## 다음으로 할 일(제안)
+- 타입스크립트 타입 정리 (`selectedGroup` 등 `unknown` → 명시적 타입)
+- 접근성(aria) 추가
+- 반응형/테스트 강화
+
+원하시면 README 내용을 더 자세히 채우거나, 배포(Verce/Netlify) 설정을 추가해 드리겠습니다.
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
