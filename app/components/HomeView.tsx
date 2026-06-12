@@ -132,9 +132,9 @@ export default function HomeView({ celebrities, restaurants }: Props) {
         </button>
       </div>
 
-      <p className="px-5 text-[13px] font-bold text-gray-700 mb-4">
+      {/* <p className="px-5 text-[13px] font-bold text-gray-700 mb-4">
         어떤 셀럽의 맛집으로 떠나볼까요?
-      </p>
+      </p> */}
 
       {/* Celebrity badge grid */}
       <div className="px-5 grid grid-cols-2 gap-3">
