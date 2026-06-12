@@ -1,42 +1,42 @@
 "use client";
-import React from 'react';
-import { Home, Search, Compass, Map as MapIcon } from 'lucide-react';
+import { Home, Search, Map, User } from 'lucide-react';
+import type { Tab } from '../page';
 
 type Props = {
-    activeTab: string;
-    setActiveTab: (t: string) => void;
+  activeTab: Tab;
+  setActiveTab: (t: Tab) => void;
 };
 
-export default function Navbar({ activeTab, setActiveTab }: Props) {
-    const tabs = [
-        { id: 'home', icon: Home, label: '홈' },
-        { id: 'search', icon: Search, label: '검색' },
-        { id: 'course', icon: Compass, label: '코스' },
-        { id: 'map', icon: MapIcon, label: '지도' },
-    ];
+const tabs = [
+  { id: 'home' as Tab, icon: Home, label: '홈' },
+  { id: 'search' as Tab, icon: Search, label: '검색' },
+  { id: 'map' as Tab, icon: Map, label: '지도' },
+  { id: 'mypage' as Tab, icon: User, label: '마이' },
+];
 
-    return (
-        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-100 p-4 flex justify-around items-center z-50">
-            {tabs.map(tab => {
-                const Icon = tab.icon;
-                const isHome = tab.id === 'home';
-                return (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center transition-colors cursor-pointer ${activeTab === tab.id ? 'text-pink-500' : 'text-gray-400'}`}
-                    >
-                        {isHome ? (
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === tab.id ? 'bg-pink-100 text-pink-500' : 'bg-gray-100 text-gray-400'}`}>
-                                <Icon size={18} />
-                            </div>
-                        ) : (
-                            <Icon size={24} />
-                        )}
-                        <span className="text-[10px] mt-1 font-medium">{tab.label}</span>
-                    </button>
-                );
-            })}
-        </nav>
-    );
+export default function Navbar({ activeTab, setActiveTab }: Props) {
+  return (
+    <nav className="absolute bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-2 pb-4 flex justify-around items-center z-50">
+      {tabs.map(tab => {
+        const Icon = tab.icon;
+        const active = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all cursor-pointer"
+          >
+            <Icon
+              size={22}
+              strokeWidth={active ? 2.5 : 1.8}
+              className={`transition-colors ${active ? 'text-violet-600' : 'text-gray-400'}`}
+            />
+            <span className={`text-[10px] font-semibold tracking-tight transition-colors ${active ? 'text-violet-600' : 'text-gray-400'}`}>
+              {tab.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
 }

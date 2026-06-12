@@ -1,153 +1,348 @@
 "use client";
-import React from 'react';
-import { ChevronLeft, MapPin, Star, Clock, Coffee, Navigation } from 'lucide-react';
-
-type Celeb = { id: number; name: string; group: string };
-type Restaurant = {
-    id: number;
-    name: string;
-    distance: string;
-    rating: number;
-    recom: string[];
-    location: string;
-    hours: string;
-    breakTime?: string | null;
-};
+import { useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  Bell, ChevronLeft, ChevronRight, Heart,
+  MapPin, Star, Clock, Coffee, Navigation,
+} from 'lucide-react';
+import type { Celeb, Restaurant } from '../lib/types';
 
 type Props = {
-    homeStack: string[];
-    celebrities: Celeb[];
-    restaurants: Restaurant[];
-    selectedGroup: Celeb | null;
-    selectedRestaurant: Restaurant | null;
-    pushHome: (screen: string, data?: any) => void;
-    popHome: () => void;
+  celebrities: Celeb[];
+  restaurants: Restaurant[];
 };
 
-export default function HomeView({
-    homeStack,
-    celebrities,
-    restaurants,
-    selectedGroup,
-    selectedRestaurant,
-    pushHome,
-    popHome,
-}: Props) {
-    const current = homeStack[homeStack.length - 1];
+type Screen = 'celebs' | 'restaurants' | 'detail';
 
-    const getSortedRestaurants = () => {
-        if (!selectedGroup) return restaurants;
-        return [...restaurants].sort((a, b) => {
-            const aHas = a.recom.includes(selectedGroup.name) ? 1 : 0;
-            const bHas = b.recom.includes(selectedGroup.name) ? 1 : 0;
-            return bHas - aHas;
-        });
-    };
+export default function HomeView({ celebrities, restaurants }: Props) {
+  const [screen, setScreen] = useState<Screen>('celebs');
+  const [selectedCeleb, setSelectedCeleb] = useState<Celeb | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<number>>(
+    new Set(restaurants.filter(r => r.liked).map(r => r.id))
+  );
 
-    if (current === 'home') {
-        return (
-            <div className="p-6 space-y-6">
-                <div className="text-center pt-4">
-                    <h1 className="text-3xl font-extrabold text-indigo-900">안녕! 여행자님! 💖</h1>
-                    <p className="text-gray-500 mt-2">오늘 어떤 그룹의 맛집을 가볼까?</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    {celebrities.map(c => (
-                        <button
-                            key={c.id}
-                            onClick={() => pushHome('restaurants', c)}
-                            className="p-6 bg-white border-2 border-pink-100 rounded-[28px] shadow-lg shadow-pink-100 hover:scale-105 transition-all text-center cursor-pointer"
-                        >
-                            <div className="w-14 h-14 mx-auto bg-pink-100 rounded-full flex items-center justify-center mb-3 text-pink-600 font-bold text-lg">
-                                {c.group.charAt(0)}
-                            </div>
-                            <p className="font-extrabold text-lg text-black">{c.name}</p>
-                        </button>
-                    ))}
-                </div>
+  const celebRestaurants = selectedCeleb
+    ? restaurants.filter(r => r.recom.includes(selectedCeleb.group))
+    : [];
+
+  const toggleLike = (e: MouseEvent, id: number) => {
+    e.stopPropagation();
+    setLikedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const goToCeleb = (celeb: Celeb) => {
+    setSelectedCeleb(celeb);
+    setScreen('restaurants');
+  };
+
+  const goToDetail = (r: Restaurant) => {
+    setSelectedRestaurant(r);
+    setScreen('detail');
+  };
+
+  /* ── 상세 화면 ── */
+  if (screen === 'detail' && selectedRestaurant) {
+    return (
+      <Detail
+        restaurant={selectedRestaurant}
+        celebrities={celebrities}
+        liked={likedIds.has(selectedRestaurant.id)}
+        onToggleLike={e => toggleLike(e, selectedRestaurant.id)}
+        onBack={() => setScreen('restaurants')}
+      />
+    );
+  }
+
+  /* ── 맛집 목록 화면 ── */
+  if (screen === 'restaurants' && selectedCeleb) {
+    return (
+      <div className="pb-28">
+        {/* Header */}
+        <div className="px-5 pt-6 pb-3 bg-[#f8f7ff] sticky top-0 z-10">
+          <button
+            onClick={() => setScreen('celebs')}
+            className="flex items-center gap-1.5 text-sm text-gray-500 mb-4"
+          >
+            <ChevronLeft size={18} /> 셀럽 목록
+          </button>
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-full bg-gradient-to-br ${selectedCeleb.gradient} flex items-center justify-center text-lg flex-shrink-0`}
+            >
+              {selectedCeleb.emoji}
             </div>
-        );
-    }
-
-    if (current === 'restaurants') {
-        return (
-            <div className="p-6 space-y-4">
-                <button onClick={popHome} className="flex items-center text-gray-400 mb-4 hover:text-indigo-500 cursor-pointer">
-                    <ChevronLeft size={20} /> 돌아가기
-                </button>
-                <h2 className="text-2xl font-bold text-gray-800">
-                    <span className="text-pink-500">{selectedGroup?.name}</span> 추천 맛집 🍽️
-                </h2>
-                {getSortedRestaurants().map(r => (
-                    <div key={r.id} onClick={() => pushHome('detail', r)} className="p-5 bg-white border-2 border-indigo-50 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors shadow-sm">
-                        <div>
-                            <p className="font-bold text-lg text-indigo-900">{r.name}</p>
-                            <div className="text-xs text-indigo-400 mt-1 flex items-center gap-2">
-                                <MapPin size={12} /> {r.distance} 거리
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center text-yellow-500 font-bold"><Star size={16} className="mr-1" /> {r.rating}</div>
-                        </div>
-                    </div>
-                ))}
+            <div>
+              <h2 className="text-lg font-extrabold text-gray-900">
+                {selectedCeleb.name} 추천 맛집
+              </h2>
+              <p className="text-xs text-gray-400">{celebRestaurants.length}개의 맛집</p>
             </div>
-        );
-    }
+          </div>
+        </div>
 
-    if (current === 'detail') {
-        return (
-            <div className="p-6 space-y-6 pb-20">
-                <button onClick={popHome} className="flex items-center text-gray-400 mb-4 cursor-pointer"><ChevronLeft size={20} /> 뒤로</button>
-                <div className="h-56 bg-gradient-to-r from-pink-200 to-indigo-200 rounded-3xl flex items-center justify-center text-white font-bold shadow-xl">
-                    맛있는 사진이 들어갈 자리! 📸
-                </div>
-                <div>
-                    <h2 className="text-3xl font-bold text-gray-900">{selectedRestaurant?.name}</h2>
-                    <div className="bg-pink-50 p-3 rounded-xl mt-3 text-sm text-pink-600 font-medium inline-block">
-                        ✨ {selectedGroup?.name}님의 추천 맛집입니다!
-                    </div>
-                </div>
+        {/* Sort button */}
+        <div className="px-5 mb-3 flex justify-end">
+          <button className="flex items-center gap-0.5 text-xs text-gray-500 bg-white rounded-full px-3 py-1.5 border border-gray-100 shadow-sm">
+            거리순 <ChevronRight size={12} />
+          </button>
+        </div>
 
-                <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-4 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <MapPin className="text-indigo-400" size={20} />
-                        <div>
-                            <p className="text-xs text-gray-400">위치</p>
-                            <p className="font-medium text-gray-700">{selectedRestaurant?.location}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Clock className="text-indigo-400" size={20} />
-                        <div>
-                            <p className="text-xs text-gray-400">영업시간</p>
-                            <p className="font-medium text-gray-700">{selectedRestaurant?.hours}</p>
-                        </div>
-                    </div>
-                    {selectedRestaurant?.breakTime && (
-                        <div className="flex items-center gap-3">
-                            <Coffee className="text-indigo-400" size={20} />
-                            <div>
-                                <p className="text-xs text-gray-400">브레이크 타임</p>
-                                <p className="font-medium text-gray-700">{selectedRestaurant?.breakTime}</p>
-                            </div>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                        <Navigation className="text-indigo-400" size={20} />
-                        <div>
-                            <p className="text-xs text-gray-400">내 위치에서 거리</p>
-                            <p className="font-medium text-gray-700">약 {selectedRestaurant?.distance} 떨어져 있어요!</p>
-                        </div>
-                    </div>
-                </div>
-
-                <button className="w-full py-4 bg-indigo-500 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-600 transition-all flex items-center justify-center gap-2">
-                    <Navigation size={20} /> 길 안내 시작하기 🚀
-                </button>
+        {/* Restaurant cards */}
+        <div className="px-5 space-y-3">
+          {celebRestaurants.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-4xl mb-3">🍽️</p>
+              <p className="text-gray-400 font-medium">추천 맛집이 없어요</p>
             </div>
-        );
-    }
+          ) : (
+            celebRestaurants.map(r => (
+              <RestaurantCard
+                key={r.id}
+                restaurant={r}
+                celebrities={celebrities}
+                liked={likedIds.has(r.id)}
+                onToggleLike={e => toggleLike(e, r.id)}
+                onClick={() => goToDetail(r)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
-    return null;
+  /* ── 홈: 셀럽 배지 그리드 ── */
+  return (
+    <div className="pb-28">
+      {/* Header */}
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-gray-900">
+            Celeb<span className="text-violet-600">Map</span>
+          </h1>
+          <p className="text-xs text-gray-400 mt-0.5">셀럽 추천 맛집 여행</p>
+        </div>
+        <button className="relative w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
+          <Bell size={17} className="text-gray-500" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-white" />
+        </button>
+      </div>
+
+      <p className="px-5 text-[13px] font-bold text-gray-700 mb-4">
+        어떤 셀럽의 맛집으로 떠나볼까요?
+      </p>
+
+      {/* Celebrity badge grid */}
+      <div className="px-5 grid grid-cols-2 gap-3">
+        {celebrities.map(celeb => (
+          <button
+            key={celeb.id}
+            onClick={() => goToCeleb(celeb)}
+            className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-3 active:scale-[0.97] transition-transform cursor-pointer"
+          >
+            <div
+              className={`w-16 h-16 rounded-full bg-gradient-to-br ${celeb.gradient} flex items-center justify-center text-3xl shadow-md`}
+            >
+              {celeb.emoji}
+            </div>
+            <div className="text-center">
+              <p className="font-extrabold text-gray-900 text-[15px]">{celeb.name}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{celeb.group}</p>
+            </div>
+            {/* <div
+              className={`w-full py-1.5 rounded-xl bg-gradient-to-r ${celeb.gradient} text-white text-xs font-bold text-center`}
+            >
+              맛집 보기
+            </div> */}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── 서브 컴포넌트들 ── */
+
+function RestaurantCard({
+  restaurant: r,
+  celebrities,
+  liked,
+  onToggleLike,
+  onClick,
+}: {
+  restaurant: Restaurant;
+  celebrities: Celeb[];
+  liked: boolean;
+  onToggleLike: (e: MouseEvent) => void;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer active:scale-[0.99] transition-transform"
+    >
+      <div className={`h-36 bg-gradient-to-br ${r.colorFrom} ${r.colorTo} relative flex items-end`}>
+        <div className="px-3 pb-3 flex gap-1.5">
+          {r.recom.map(g => {
+            const celeb = celebrities.find(c => c.group === g);
+            return (
+              <span
+                key={g}
+                className={`px-2.5 py-0.5 bg-gradient-to-r ${celeb?.gradient ?? 'from-gray-500 to-gray-600'} text-white text-[10px] font-bold rounded-full shadow-sm`}
+              >
+                {g}
+              </span>
+            );
+          })}
+        </div>
+        <button
+          onClick={onToggleLike}
+          className="absolute top-2.5 right-2.5 w-8 h-8 bg-white/85 rounded-full flex items-center justify-center backdrop-blur-sm"
+        >
+          <Heart size={15} className={liked ? 'fill-rose-500 text-rose-500' : 'text-gray-400'} />
+        </button>
+      </div>
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div>
+          <p className="font-bold text-gray-900 text-[15px]">{r.name}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-xs text-gray-400">{r.category}</span>
+            <span className="text-gray-200 text-xs">·</span>
+            <span className="text-xs text-gray-400">{r.priceRange}</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-0.5">
+            <Star size={12} className="fill-yellow-400 text-yellow-400" />
+            <span className="text-sm font-bold text-gray-800">{r.rating}</span>
+            <span className="text-xs text-gray-400 ml-0.5">({r.reviewCount})</span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <MapPin size={10} className="text-gray-400" />
+            <span className="text-xs text-gray-400">{r.distance}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Detail({
+  restaurant: r,
+  celebrities,
+  liked,
+  onToggleLike,
+  onBack,
+}: {
+  restaurant: Restaurant;
+  celebrities: Celeb[];
+  liked: boolean;
+  onToggleLike: (e: MouseEvent) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="pb-28">
+      <div className={`h-64 bg-gradient-to-br ${r.colorFrom} ${r.colorTo} relative`}>
+        <button
+          onClick={onBack}
+          className="absolute top-4 left-4 w-9 h-9 bg-white/85 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm"
+        >
+          <ChevronLeft size={18} className="text-gray-700" />
+        </button>
+        <button
+          onClick={onToggleLike}
+          className="absolute top-4 right-4 w-9 h-9 bg-white/85 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm"
+        >
+          <Heart size={18} className={liked ? 'fill-rose-500 text-rose-500' : 'text-gray-600'} />
+        </button>
+        <div className="absolute bottom-4 left-4">
+          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-xs font-semibold text-gray-600 rounded-full">
+            {r.category}
+          </span>
+        </div>
+      </div>
+
+      <div className="px-5 pt-5 space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-gray-900">{r.name}</h2>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {r.recom.map(g => {
+              const celeb = celebrities.find(c => c.group === g);
+              return (
+                <span
+                  key={g}
+                  className={`px-3 py-1 bg-gradient-to-r ${celeb?.gradient ?? 'from-gray-400 to-gray-500'} text-white text-xs font-bold rounded-full`}
+                >
+                  {celeb?.emoji} {g} 추천
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <Star size={17} className="fill-yellow-400 text-yellow-400" />
+            <span className="text-lg font-extrabold text-gray-900">{r.rating}</span>
+            <span className="text-sm text-gray-400">({r.reviewCount})</span>
+          </div>
+          <div className="w-px h-4 bg-gray-200" />
+          <span className="text-sm font-medium text-gray-600">{r.priceRange}</span>
+          <div className="w-px h-4 bg-gray-200" />
+          <div className="flex items-center gap-1">
+            <MapPin size={13} className="text-gray-400" />
+            <span className="text-sm text-gray-500">{r.distance}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {r.tags.map(tag => (
+            <span key={tag} className="px-3 py-1.5 bg-violet-50 text-violet-600 text-xs font-semibold rounded-full">
+              #{tag}
+            </span>
+          ))}
+        </div>
+
+        <div className="bg-gray-50 rounded-2xl p-4 space-y-3.5">
+          <InfoRow icon={<MapPin size={14} className="text-violet-600" />} label="위치" value={r.location} />
+          <InfoRow icon={<Clock size={14} className="text-violet-600" />} label="영업시간" value={r.hours} />
+          {r.breakTime && (
+            <InfoRow icon={<Coffee size={14} className="text-orange-500" />} label="브레이크 타임" value={r.breakTime} />
+          )}
+        </div>
+
+        <div className="flex gap-3 pb-4">
+          <button className="flex-1 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl font-bold shadow-lg shadow-violet-200/60 flex items-center justify-center gap-2">
+            <Navigation size={18} /> 길 안내
+          </button>
+          <button
+            onClick={onToggleLike}
+            className={`w-14 rounded-2xl flex items-center justify-center border-2 transition-colors ${
+              liked ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-gray-200'
+            }`}
+          >
+            <Heart size={20} className={liked ? 'fill-rose-500 text-rose-500' : 'text-gray-400'} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-gray-100">
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-medium text-gray-700 mt-0.5">{value}</p>
+      </div>
+    </div>
+  );
 }
