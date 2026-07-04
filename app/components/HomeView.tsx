@@ -132,9 +132,9 @@ export default function HomeView({ celebrities, restaurants }: Props) {
         </button>
       </div>
 
-      {/* <p className="px-5 text-[13px] font-bold text-gray-700 mb-4">
+      <p className="px-5 text-[13px] font-bold text-gray-700 mb-4">
         어떤 셀럽의 맛집으로 떠나볼까요?
-      </p> */}
+      </p>
 
       {/* Celebrity badge grid */}
       <div className="px-5 grid grid-cols-2 gap-3">
@@ -299,13 +299,14 @@ function Detail({
           </div>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        {/* 태그 */}
+        {/* <div className="flex gap-2 flex-wrap">
           {r.tags.map(tag => (
             <span key={tag} className="px-3 py-1.5 bg-violet-50 text-violet-600 text-xs font-semibold rounded-full">
               #{tag}
             </span>
           ))}
-        </div>
+        </div> */}
 
         <div className="bg-gray-50 rounded-2xl p-4 space-y-3.5">
           <InfoRow icon={<MapPin size={14} className="text-violet-600" />} label="위치" value={r.location} />
